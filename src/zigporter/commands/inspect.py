@@ -411,7 +411,9 @@ async def _pick_device(
 def _debug_lovelace(all_data: dict[str, Any]) -> None:
     """Print a diagnostic summary of what was fetched from Lovelace."""
     panels_data = all_data.get("_panels_data", {})
-    lovelace_panels = {k: v for k, v in panels_data.items() if v.get("component_name") == "lovelace"}
+    lovelace_panels = {
+        k: v for k, v in panels_data.items() if v.get("component_name") == "lovelace"
+    }
     lovelace = all_data["lovelace"]
 
     console.print("\n[bold dim]Lovelace debug[/bold dim]")

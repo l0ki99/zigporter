@@ -123,9 +123,7 @@ def test_scan_dashboard_sections_layout():
                         "cards": [
                             {
                                 "type": "custom:apexcharts-card",
-                                "series": [
-                                    {"entity": "sensor.kontor_temp_sensor_temperature"}
-                                ],
+                                "series": [{"entity": "sensor.kontor_temp_sensor_temperature"}],
                             }
                         ]
                     }

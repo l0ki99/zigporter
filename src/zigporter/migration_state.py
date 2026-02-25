@@ -46,9 +46,7 @@ def load_state(state_path: Path, zha_export_path: Path, devices: list[dict]) -> 
                 state.devices[ieee] = DeviceState(ieee=ieee, name=device["name"])
         return state
 
-    device_states = {
-        d["ieee"]: DeviceState(ieee=d["ieee"], name=d["name"]) for d in devices
-    }
+    device_states = {d["ieee"]: DeviceState(ieee=d["ieee"], name=d["name"]) for d in devices}
     return MigrationState(zha_export=str(zha_export_path), devices=device_states)
 
 

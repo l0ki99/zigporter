@@ -14,7 +14,7 @@ def _ieee_from_z2m_identifier(identifier: str) -> str | None:
     """
     prefix = "zigbee2mqtt_"
     if identifier.lower().startswith(prefix):
-        candidate = normalize_ieee(identifier[len(prefix):])
+        candidate = normalize_ieee(identifier[len(prefix) :])
         if len(candidate) == 16:
             return candidate
     # Bare IEEE address (some setups omit the prefix)
@@ -123,6 +123,7 @@ class Z2MClient:
     def _ha_client(self) -> Any:
         if self._ha_client_instance is None:
             from zigporter.ha_client import HAClient
+
             self._ha_client_instance = HAClient(self._ha_url, self._ha_token, self._verify_ssl)
         return self._ha_client_instance
 
@@ -147,16 +148,20 @@ class Z2MClient:
 
             manufacturer = entry.get("manufacturer") or ""
             model = entry.get("model") or ""
-            devices.append({
-                "ieee_address": f"0x{ieee_hex}",
-                "friendly_name": entry.get("name_by_user") or entry.get("name") or f"0x{ieee_hex}",
-                "type": "EndDevice",
-                "manufacturer": manufacturer,
-                "model_id": model,
-                "definition": {"vendor": manufacturer, "model": model},
-                "power_source": "",
-                "supported": True,
-            })
+            devices.append(
+                {
+                    "ieee_address": f"0x{ieee_hex}",
+                    "friendly_name": entry.get("name_by_user")
+                    or entry.get("name")
+                    or f"0x{ieee_hex}",
+                    "type": "EndDevice",
+                    "manufacturer": manufacturer,
+                    "model_id": model,
+                    "definition": {"vendor": manufacturer, "model": model},
+                    "power_source": "",
+                    "supported": True,
+                }
+            )
         return devices
 
     async def _mqtt_publish(self, topic: str, payload: str) -> None:

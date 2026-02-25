@@ -35,9 +35,7 @@ async def test_get_zha_devices(client, zha_devices_payload, mocker):
 
 @respx.mock
 async def test_get_states(client, states_payload):
-    respx.get(f"{HA_URL}/api/states").mock(
-        return_value=httpx.Response(200, json=states_payload)
-    )
+    respx.get(f"{HA_URL}/api/states").mock(return_value=httpx.Response(200, json=states_payload))
     result = await client.get_states()
     assert any(s["entity_id"] == "climate.living_room_thermostat" for s in result)
 
@@ -46,7 +44,9 @@ async def test_get_zha_devices_ws_command_failure(client, mocker):
     messages = [
         json.dumps({"type": "auth_required"}),
         json.dumps({"type": "auth_ok"}),
-        json.dumps({"id": 1, "type": "result", "success": False, "error": {"code": "unknown_command"}}),
+        json.dumps(
+            {"id": 1, "type": "result", "success": False, "error": {"code": "unknown_command"}}
+        ),
     ]
     mock_ws = mocker.AsyncMock()
     mock_ws.recv = mocker.AsyncMock(side_effect=messages)
@@ -60,9 +60,7 @@ async def test_get_zha_devices_ws_command_failure(client, mocker):
 
 @respx.mock
 async def test_get_states_http_error(client):
-    respx.get(f"{HA_URL}/api/states").mock(
-        return_value=httpx.Response(403)
-    )
+    respx.get(f"{HA_URL}/api/states").mock(return_value=httpx.Response(403))
     with pytest.raises(httpx.HTTPStatusError):
         await client.get_states()
 

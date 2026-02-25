@@ -55,9 +55,7 @@ async def test_get_devices_bearer_auth(client):
         {"ieee_address": "00:11:22:33:44:55:66:77", "friendly_name": "Living Room Thermostat"},
         {"ieee_address": "aa:bb:cc:dd:ee:ff:00:11", "friendly_name": "Kitchen Plug"},
     ]
-    respx.get(f"{Z2M_URL}/api/devices").mock(
-        return_value=httpx.Response(200, json=devices_payload)
-    )
+    respx.get(f"{Z2M_URL}/api/devices").mock(return_value=httpx.Response(200, json=devices_payload))
 
     result = await client.get_devices()
 
@@ -74,7 +72,9 @@ async def test_get_devices_falls_back_to_session_on_html_response(client):
     devices_payload = [{"ieee_address": "aa:bb", "friendly_name": "Plug"}]
     respx.get(f"{Z2M_URL}/api/devices").mock(
         side_effect=[
-            httpx.Response(200, content=b"<html>Login</html>", headers={"content-type": "text/html"}),
+            httpx.Response(
+                200, content=b"<html>Login</html>", headers={"content-type": "text/html"}
+            ),
             httpx.Response(200, json=devices_payload),
         ]
     )
@@ -153,11 +153,13 @@ async def test_get_devices_falls_back_to_ha_registry_when_session_fails(client, 
 
     from unittest.mock import AsyncMock, patch
 
-    ws_messages = iter([
-        json.dumps({"type": "auth_required"}),
-        json.dumps({"type": "auth_ok"}),
-        json.dumps({"id": 1, "type": "result", "success": True, "result": [registry_entry]}),
-    ])
+    ws_messages = iter(
+        [
+            json.dumps({"type": "auth_required"}),
+            json.dumps({"type": "auth_ok"}),
+            json.dumps({"id": 1, "type": "result", "success": True, "result": [registry_entry]}),
+        ]
+    )
 
     mock_ws = AsyncMock()
     mock_ws.recv = AsyncMock(side_effect=ws_messages)
@@ -223,9 +225,12 @@ async def test_rename_device(client):
 @respx.mock
 async def test_get_device_by_ieee_found(client):
     respx.get(f"{Z2M_URL}/api/devices").mock(
-        return_value=httpx.Response(200, json=[
-            {"ieee_address": "0x001234567890abcd", "friendly_name": "Thermostat"},
-        ])
+        return_value=httpx.Response(
+            200,
+            json=[
+                {"ieee_address": "0x001234567890abcd", "friendly_name": "Thermostat"},
+            ],
+        )
     )
 
     # Should match regardless of input format
@@ -237,9 +242,7 @@ async def test_get_device_by_ieee_found(client):
 
 @respx.mock
 async def test_get_device_by_ieee_not_found(client):
-    respx.get(f"{Z2M_URL}/api/devices").mock(
-        return_value=httpx.Response(200, json=[])
-    )
+    respx.get(f"{Z2M_URL}/api/devices").mock(return_value=httpx.Response(200, json=[]))
 
     result = await client.get_device_by_ieee("ff:ff:ff:ff:ff:ff:ff:ff")
 

@@ -44,9 +44,7 @@ def test_zha_device_minimal():
 
 
 def test_zha_device_with_entities():
-    entity = ZHAEntity(
-        entity_id="switch.test", name="Test Switch", platform="zha"
-    )
+    entity = ZHAEntity(entity_id="switch.test", name="Test Switch", platform="zha")
     device = ZHADevice(
         device_id="abc123",
         ieee="00:11:22:33:44:55:66:77",

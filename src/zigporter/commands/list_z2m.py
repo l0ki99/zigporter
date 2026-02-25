@@ -9,7 +9,9 @@ from zigporter.z2m_client import Z2MClient
 console = Console()
 
 
-async def run_list_z2m(ha_url: str, token: str, z2m_url: str, verify_ssl: bool, mqtt_topic: str = "zigbee2mqtt") -> None:
+async def run_list_z2m(
+    ha_url: str, token: str, z2m_url: str, verify_ssl: bool, mqtt_topic: str = "zigbee2mqtt"
+) -> None:
     client = Z2MClient(ha_url, token, z2m_url, verify_ssl, mqtt_topic)
 
     with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
@@ -45,5 +47,7 @@ async def run_list_z2m(ha_url: str, token: str, z2m_url: str, verify_ssl: bool, 
     console.print(table)
 
 
-def list_z2m_command(ha_url: str, token: str, z2m_url: str, verify_ssl: bool, mqtt_topic: str = "zigbee2mqtt") -> None:
+def list_z2m_command(
+    ha_url: str, token: str, z2m_url: str, verify_ssl: bool, mqtt_topic: str = "zigbee2mqtt"
+) -> None:
     asyncio.run(run_list_z2m(ha_url, token, z2m_url, verify_ssl, mqtt_topic))

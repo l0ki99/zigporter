@@ -26,9 +26,7 @@ def load_config() -> tuple[str, str, bool]:
     verify_ssl = os.environ.get("HA_VERIFY_SSL", "true").lower() != "false"
 
     if not ha_url:
-        raise ValueError(
-            "HA_URL is not set. Add it to .env or set it as an environment variable."
-        )
+        raise ValueError("HA_URL is not set. Add it to .env or set it as an environment variable.")
     if not ha_token:
         raise ValueError(
             "HA_TOKEN is not set. Add it to .env or set it as an environment variable."
@@ -50,9 +48,7 @@ def load_z2m_config() -> tuple[str, str]:
 
     z2m_url = os.environ.get("Z2M_URL", "").rstrip("/")
     if not z2m_url:
-        raise ValueError(
-            "Z2M_URL is not set. Add it to .env or set it as an environment variable."
-        )
+        raise ValueError("Z2M_URL is not set. Add it to .env or set it as an environment variable.")
 
     mqtt_topic = os.environ.get("Z2M_MQTT_TOPIC", "zigbee2mqtt")
     return z2m_url, mqtt_topic
