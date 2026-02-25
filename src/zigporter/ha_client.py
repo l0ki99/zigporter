@@ -1,0 +1,240 @@
+import json
+import ssl
+from typing import Any
+
+import httpx
+import websockets
+
+from zigporter.utils import normalize_ieee
+
+
+class HAClient:
+    """Client for Home Assistant REST and WebSocket APIs."""
+
+    def __init__(self, ha_url: str, token: str, verify_ssl: bool = True) -> None:
+        self._ha_url = ha_url.rstrip("/")
+        self._token = token
+        self._verify_ssl = verify_ssl
+        self._headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+    def _ssl_context(self) -> bool | ssl.SSLContext:
+        if self._verify_ssl:
+            return True
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+
+    @property
+    def _ws_url(self) -> str:
+        return (
+            self._ha_url.replace("https://", "wss://").replace("http://", "ws://")
+            + "/api/websocket"
+        )
+
+    async def get_states(self) -> list[dict[str, Any]]:
+        """Fetch all entity states via REST API."""
+        async with httpx.AsyncClient(headers=self._headers, verify=self._ssl_context()) as client:
+            resp = await client.get(f"{self._ha_url}/api/states")
+            resp.raise_for_status()
+            return resp.json()
+
+    async def get_all_ws_data(self) -> dict[str, Any]:
+        """Open a single WebSocket connection and fetch all registry + ZHA data.
+
+        Returns a dict with keys: zha_devices, entity_registry, device_registry,
+        area_registry, automation_configs.
+        """
+        commands = [
+            ("zha_devices", {"type": "zha/devices"}),
+            ("entity_registry", {"type": "config/entity_registry/list"}),
+            ("device_registry", {"type": "config/device_registry/list"}),
+            ("area_registry", {"type": "config/area_registry/list"}),
+            ("automation_configs", {"type": "config/automation/list"}),
+        ]
+
+        ssl_ctx = self._ssl_context()
+        async with websockets.connect(self._ws_url, ssl=ssl_ctx, max_size=16 * 1024 * 1024) as ws:
+            # Auth handshake
+            msg = json.loads(await ws.recv())
+            if msg.get("type") != "auth_required":
+                raise RuntimeError(f"Expected auth_required, got: {msg}")
+
+            await ws.send(json.dumps({"type": "auth", "access_token": self._token}))
+            msg = json.loads(await ws.recv())
+            if msg.get("type") != "auth_ok":
+                raise RuntimeError(f"WebSocket authentication failed: {msg}")
+
+            # Send all commands sequentially on the same connection
+            results: dict[str, Any] = {}
+            for cmd_id, (key, command) in enumerate(commands, start=1):
+                await ws.send(json.dumps({"id": cmd_id, **command}))
+                msg = json.loads(await ws.recv())
+                if not msg.get("success"):
+                    if key == "automation_configs":
+                        results[key] = []
+                    else:
+                        raise RuntimeError(f"WebSocket command '{command['type']}' failed: {msg}")
+                else:
+                    results[key] = msg["result"]
+
+        return results
+
+    # Individual methods kept for targeted use and testability
+
+    async def _ws_command(self, command: dict[str, Any]) -> Any:
+        """Send a single WebSocket command and return the result."""
+        ssl_ctx = self._ssl_context()
+        async with websockets.connect(self._ws_url, ssl=ssl_ctx, max_size=16 * 1024 * 1024) as ws:
+            msg = json.loads(await ws.recv())
+            if msg.get("type") != "auth_required":
+                raise RuntimeError(f"Expected auth_required, got: {msg}")
+
+            await ws.send(json.dumps({"type": "auth", "access_token": self._token}))
+            msg = json.loads(await ws.recv())
+            if msg.get("type") != "auth_ok":
+                raise RuntimeError(f"WebSocket authentication failed: {msg}")
+
+            cmd = {"id": 1, **command}
+            await ws.send(json.dumps(cmd))
+            msg = json.loads(await ws.recv())
+            if not msg.get("success"):
+                raise RuntimeError(f"WebSocket command failed: {msg}")
+
+            return msg["result"]
+
+    async def get_zha_devices(self) -> list[dict[str, Any]]:
+        """Fetch all ZHA devices via WebSocket (REST endpoint removed in HA 2025+)."""
+        return await self._ws_command({"type": "zha/devices"})
+
+    async def get_entity_registry(self) -> list[dict[str, Any]]:
+        """Fetch the full entity registry."""
+        return await self._ws_command({"type": "config/entity_registry/list"})
+
+    async def get_device_registry(self) -> list[dict[str, Any]]:
+        """Fetch the full device registry."""
+        return await self._ws_command({"type": "config/device_registry/list"})
+
+    async def get_area_registry(self) -> list[dict[str, Any]]:
+        """Fetch the full area registry."""
+        return await self._ws_command({"type": "config/area_registry/list"})
+
+    async def get_automation_configs(self) -> list[dict[str, Any]]:
+        """Fetch automation configurations."""
+        return await self._ws_command({"type": "config/automation/list"})
+
+    async def get_scripts(self) -> list[dict[str, Any]]:
+        """Fetch UI-managed script configurations. Returns [] if unsupported."""
+        try:
+            return await self._ws_command({"type": "config/script/list"})
+        except RuntimeError:
+            return []
+
+    async def get_scenes(self) -> list[dict[str, Any]]:
+        """Fetch scene configurations. Returns [] if unsupported."""
+        try:
+            return await self._ws_command({"type": "config/scene/list"})
+        except RuntimeError:
+            return []
+
+    async def get_panels(self) -> dict[str, Any]:
+        """Fetch all registered frontend panels. Returns {} if unsupported."""
+        try:
+            return await self._ws_command({"type": "get_panels"})
+        except RuntimeError:
+            return {}
+
+    async def get_lovelace_config(self, url_path: str | None = None) -> dict[str, Any] | None:
+        """Fetch Lovelace config for one dashboard. url_path=None → default dashboard.
+
+        Tries WebSocket first; falls back to REST API if the WS command fails
+        (common when Lovelace is in yaml mode or the dashboard is panel-defined).
+        """
+        cmd: dict[str, Any] = {"type": "lovelace/config"}
+        if url_path is not None:
+            cmd["url_path"] = url_path
+        try:
+            result = await self._ws_command(cmd)
+            if result:
+                return result
+        except RuntimeError:
+            pass
+
+        # REST fallback — works for yaml-mode and some panel-defined dashboards
+        try:
+            params: dict[str, str] = {}
+            if url_path is not None:
+                params["url_path"] = url_path
+            async with httpx.AsyncClient(
+                headers=self._headers, verify=self._ssl_context()
+            ) as client:
+                resp = await client.get(f"{self._ha_url}/api/lovelace/config", params=params)
+                resp.raise_for_status()
+                return resp.json()
+        except Exception:
+            return None
+
+    async def get_z2m_device_id(self, ieee: str) -> str | None:
+        """Find the HA device_id for a Z2M-paired device by IEEE address.
+
+        Z2M registers devices with MQTT identifiers like 'zigbee2mqtt_0x<hex>'.
+        Returns the HA device_id string, or None if not found.
+        """
+        norm = normalize_ieee(ieee)
+
+        registry = await self.get_device_registry()
+        for entry in registry:
+            for platform, identifier in entry.get("identifiers", []):
+                if platform != "mqtt":
+                    continue
+                ident = identifier.lower()
+                if ident.startswith("zigbee2mqtt_"):
+                    ident = ident[len("zigbee2mqtt_") :]
+                if ident.startswith("0x"):
+                    ident = ident[2:]
+                if ident.zfill(16) == norm:
+                    return entry["id"]
+        return None
+
+    async def get_entity_ids_for_device(self, device_id: str) -> list[str]:
+        """Return all entity IDs registered to a given HA device."""
+        registry = await self.get_entity_registry()
+        return [e["entity_id"] for e in registry if e.get("device_id") == device_id]
+
+    async def remove_zha_device(self, ieee: str) -> None:
+        """Remove a ZHA device by IEEE address via the zha.remove service."""
+        await self.call_service("zha", "remove", {"ieee": ieee})
+
+    async def update_device_area(self, device_id: str, area_id: str) -> None:
+        """Assign a device to an area in the HA device registry."""
+        await self._ws_command(
+            {
+                "type": "config/device_registry/update",
+                "device_id": device_id,
+                "area_id": area_id,
+            }
+        )
+
+    async def rename_entity_id(self, current_entity_id: str, new_entity_id: str) -> None:
+        """Rename an entity ID in the HA entity registry."""
+        await self._ws_command(
+            {
+                "type": "config/entity_registry/update",
+                "entity_id": current_entity_id,
+                "new_entity_id": new_entity_id,
+            }
+        )
+
+    async def call_service(self, domain: str, service: str, service_data: dict[str, Any]) -> None:
+        """Call a Home Assistant service via WebSocket."""
+        await self._ws_command(
+            {
+                "type": "call_service",
+                "domain": domain,
+                "service": service,
+                "service_data": service_data,
+            }
+        )

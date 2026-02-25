@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Test artifacts
+junit.xml
+
+# Local data files
+zha-export-*.json
+zha-migration-state.json
