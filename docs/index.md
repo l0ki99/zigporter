@@ -4,6 +4,8 @@
 
 It runs an interactive per-device wizard with persistent state — migrations can be paused and resumed across sessions without losing progress.
 
+![zigporter comic](assets/zigporter.png)
+
 ## Features
 
 - **Per-device wizard** — step-by-step guidance through removal, reset, pairing, rename, and validation
