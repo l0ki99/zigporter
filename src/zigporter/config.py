@@ -4,8 +4,25 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
+def config_dir() -> Path:
+    """Return (and create) the user-level config directory ~/.config/zigporter/."""
+    d = Path.home() / ".config" / "zigporter"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def default_export_path() -> Path:
+    return config_dir() / "zha-export.json"
+
+
+def default_state_path() -> Path:
+    return config_dir() / "migration-state.json"
+
+
 def _load_env() -> None:
-    load_dotenv(Path.cwd() / ".env")
+    # CWD .env takes highest precedence; fall back to ~/.config/zigporter/.env
+    if not load_dotenv(Path.cwd() / ".env"):
+        load_dotenv(config_dir() / ".env")
 
 
 def load_config() -> tuple[str, str, bool]:

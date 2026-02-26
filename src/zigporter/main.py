@@ -1,17 +1,19 @@
-from datetime import date
+import json
 from importlib.metadata import version as pkg_version
 from pathlib import Path
 
+import questionary
 import typer
 from rich.console import Console
 
+from zigporter.commands.check import check_command
 from zigporter.commands.compare import compare_command
-from zigporter.commands.export import export_command
+from zigporter.commands.export import export_command, run_export
 from zigporter.commands.inspect import inspect_command
 from zigporter.commands.list_z2m import list_z2m_command
 from zigporter.commands.migrate import migrate_command
 from zigporter.commands.rename import rename_command
-from zigporter.config import load_config, load_z2m_config
+from zigporter.config import default_export_path, default_state_path, load_config, load_z2m_config
 
 app = typer.Typer(
     name="zigporter",
@@ -20,6 +22,21 @@ app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 console = Console()
+
+_STYLE = questionary.Style(
+    [
+        ("qmark", "fg:ansicyan bold"),
+        ("question", "bold"),
+        ("answer", "fg:ansicyan bold"),
+        ("pointer", "fg:ansicyan bold"),
+        ("highlighted", "fg:ansicyan bold"),
+        ("selected", "fg:ansicyan"),
+        ("separator", "fg:ansibrightblack"),
+        ("instruction", "fg:ansibrightblack"),
+        ("text", ""),
+        ("disabled", "fg:ansibrightblack italic"),
+    ]
+)
 
 
 def _version_callback(value: bool) -> None:
@@ -58,13 +75,55 @@ def _get_z2m_config() -> tuple[str, str]:
         raise typer.Exit(code=1) from exc
 
 
+def _get_config_optional() -> tuple[str, str, bool]:
+    """Like _get_config but returns empty strings instead of exiting on missing values."""
+    try:
+        return load_config()
+    except ValueError:
+        return "", "", True
+
+
+def _get_z2m_config_optional() -> tuple[str, str]:
+    try:
+        return load_z2m_config()
+    except ValueError:
+        return "", "zigbee2mqtt"
+
+
+@app.command()
+def check(
+    skip_backup: bool = typer.Option(
+        False,
+        "--skip-backup",
+        help="Skip the backup reminder (for re-runs where you have already backed up).",
+    ),
+) -> None:
+    """Verify that all requirements are in place before migrating.
+
+    Checks HA connectivity, ZHA status, and Z2M availability, then prompts
+    you to confirm a backup. Run this before your first migration session.
+    """
+    ha_url, token, verify_ssl = _get_config_optional()
+    z2m_url, _ = _get_z2m_config_optional()
+
+    ok = check_command(
+        ha_url=ha_url,
+        token=token,
+        verify_ssl=verify_ssl,
+        z2m_url=z2m_url,
+        skip_backup=skip_backup,
+    )
+    if not ok:
+        raise typer.Exit(code=1)
+
+
 @app.command()
 def export(
     output: Path = typer.Option(
         None,
         "--output",
         "-o",
-        help="Output file path. Defaults to zha-export-YYYY-MM-DD.json in the current directory.",
+        help="Output file path. Defaults to ~/.config/zigporter/zha-export.json.",
     ),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON output."),
 ) -> None:
@@ -72,7 +131,7 @@ def export(
     ha_url, token, verify_ssl = _get_config()
 
     if output is None:
-        output = Path(f"zha-export-{date.today()}.json")
+        output = default_export_path()
 
     export_command(output=output, pretty=pretty, ha_url=ha_url, token=token, verify_ssl=verify_ssl)
 
@@ -119,47 +178,117 @@ def rename(
     rename_command(zha_export=str(zha_export), apply=apply)
 
 
-def _resolve_export(path: Path | None) -> Path:
-    if path is not None:
-        return path
-    candidates = sorted(Path(".").glob("zha-export-*.json"), reverse=True)
-    if not candidates:
+def _resolve_or_fetch_export(
+    explicit_path: Path | None,
+    ha_url: str,
+    token: str,
+    verify_ssl: bool,
+) -> Path:
+    """Return the export file path, fetching from HA if needed."""
+    if explicit_path is not None:
+        return explicit_path
+
+    default = default_export_path()
+
+    if default.exists():
+        try:
+            data = json.loads(default.read_text())
+            exported_at = data.get("exported_at", "unknown date")
+            device_count = len(data.get("devices", []))
+        except Exception:
+            exported_at = "unknown date"
+            device_count = 0
+
         console.print(
-            "[red]Error:[/red] No ZHA_EXPORT argument given and no zha-export-*.json found in the current directory."
+            f"\n[dim]Found export from [bold]{exported_at}[/bold] "
+            f"({device_count} device(s))[/dim]\n"
         )
-        raise typer.Exit(code=1)
-    resolved = candidates[0]
-    console.print(f"[dim]Using export file:[/dim] {resolved}")
-    return resolved
+        choice = questionary.select(
+            "Use existing export or refresh from Home Assistant?",
+            choices=[
+                questionary.Choice("Use existing export", value="use"),
+                questionary.Choice("Refresh — fetch a new export from HA", value="refresh"),
+            ],
+            style=_STYLE,
+        ).ask()
+
+        if choice == "use" or choice is None:
+            return default
+
+    else:
+        console.print("\n[yellow]No ZHA export found.[/yellow]")
+        fetch = questionary.confirm(
+            "Fetch a fresh export from Home Assistant now?",
+            default=True,
+            style=_STYLE,
+        ).ask()
+        if not fetch:
+            console.print(
+                "[red]Cannot proceed without a ZHA export.[/red]\n"
+                "Run [bold]zigporter export[/bold] first."
+            )
+            raise typer.Exit(code=1)
+
+    # Run the export and save to the default path
+    import asyncio
+
+    console.print()
+    export_data = asyncio.run(run_export(ha_url, token, verify_ssl))
+    default.write_text(export_data.model_dump_json(indent=2))
+    console.print(
+        f"[green]✓[/green] Exported [bold]{len(export_data.devices)}[/bold] devices "
+        f"to [dim]{default}[/dim]\n"
+    )
+    return default
 
 
 @app.command()
 def migrate(
     zha_export: Path = typer.Argument(
         None,
-        help="Path to a ZHA export JSON file. Defaults to the most recent zha-export-*.json in the current directory.",
+        help="Path to a ZHA export JSON file. Defaults to ~/.config/zigporter/zha-export.json.",
     ),
     state: Path = typer.Option(
-        Path("zha-migration-state.json"),
+        None,
         "--state",
-        help="Path to the migration state file. Created automatically if it does not exist.",
+        help="Path to the migration state file. Defaults to ~/.config/zigporter/migration-state.json.",
     ),
     status: bool = typer.Option(
         False,
         "--status",
         help="Show migration progress summary and exit without entering the wizard.",
     ),
+    skip_checks: bool = typer.Option(
+        False,
+        "--skip-checks",
+        help="Skip pre-flight checks (use for re-runs when you have already verified setup).",
+    ),
 ) -> None:
     """Interactive wizard to migrate ZHA devices to Zigbee2MQTT one at a time.
 
     Tracks progress in a state file so you can safely stop and resume across sessions.
+    On first run the tool will check your setup, prompt for a backup, and fetch a
+    ZHA export automatically if one is not found.
     """
     ha_url, token, verify_ssl = _get_config()
     z2m_url, mqtt_topic = _get_z2m_config()
 
+    if not skip_checks and not status:
+        ok = check_command(
+            ha_url=ha_url,
+            token=token,
+            verify_ssl=verify_ssl,
+            z2m_url=z2m_url,
+        )
+        if not ok:
+            raise typer.Exit(code=1)
+
+    export_path = _resolve_or_fetch_export(zha_export, ha_url, token, verify_ssl)
+    state_path = state if state is not None else default_state_path()
+
     migrate_command(
-        zha_export_path=_resolve_export(zha_export),
-        state_path=state,
+        zha_export_path=export_path,
+        state_path=state_path,
         status_only=status,
         ha_url=ha_url,
         token=token,

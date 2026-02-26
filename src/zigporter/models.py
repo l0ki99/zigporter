@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, Field
 
@@ -41,3 +42,17 @@ class ZHAExport(BaseModel):
     exported_at: datetime
     ha_url: str
     devices: list[ZHADevice] = Field(default_factory=list)
+
+
+class CheckStatus(str, Enum):
+    OK = "ok"
+    FAILED = "failed"
+    WARNING = "warning"
+    SKIPPED = "skipped"
+
+
+class CheckResult(BaseModel):
+    name: str
+    status: CheckStatus
+    message: str
+    blocking: bool = True

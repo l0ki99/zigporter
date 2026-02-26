@@ -49,18 +49,30 @@ cp .env.example .env   # fill in your values
 ## Usage
 
 ```bash
-# Export your ZHA device inventory
+# Verify your setup before migrating (recommended first step)
+zigporter check
+
+# Run the migration wizard (runs checks automatically on first run)
+zigporter migrate
+
+# Check migration progress without entering the wizard
+zigporter migrate --status
+
+# (Optional) manually export your ZHA device inventory
 zigporter export
 
 # (Optional) inspect what's already in Z2M
 zigporter list-z2m
-
-# Run the migration wizard
-zigporter migrate [ZHA_EXPORT]
-
-# Check progress without entering the wizard
-zigporter migrate --status
 ```
+
+`zigporter migrate` handles everything automatically on first run:
+1. Runs pre-flight checks (HA reachable, ZHA active, Z2M running)
+2. Prompts you to back up Home Assistant and your ZHA network
+3. Fetches a ZHA export if one is not found, or offers to refresh an existing one
+4. Opens the interactive migration wizard
+
+All files are stored in `~/.config/zigporter/` so the tool works from any directory.
+Use `--skip-checks` on subsequent runs to skip the pre-flight checks.
 
 ## How it works
 
