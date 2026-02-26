@@ -31,15 +31,15 @@ features = [
 ]
 
 [[project.theme.palette]]
-scheme = "default"
-primary = "teal"
-accent = "cyan"
-toggle.icon = "lucide/sun"
-toggle.name = "Switch to dark mode"
-
-[[project.theme.palette]]
 scheme = "slate"
 primary = "teal"
 accent = "cyan"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "teal"
+accent = "cyan"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
