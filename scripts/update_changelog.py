@@ -53,6 +53,7 @@ def format_changelog_entry(version: str, date: str, categories: dict[str, list[s
     for category in ["Added", "Changed", "Fixed", "Removed", "Dependencies"]:
         if categories[category]:
             lines.append(f"### {category}")
+            lines.append("")
             lines.extend(categories[category])
             lines.append("")
 
