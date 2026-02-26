@@ -64,12 +64,23 @@ def _app_options(
     pass
 
 
+def _ensure_config() -> None:
+    """Auto-run the setup wizard if no config file exists anywhere."""
+    from zigporter.config import config_dir
+
+    if not (config_dir() / ".env").exists() and not (Path.cwd() / ".env").exists():
+        console.print("[yellow]No configuration found — starting setup...[/yellow]\n")
+        if not setup_command():
+            raise typer.Exit(code=1)
+
+
 def _get_config() -> tuple[str, str, bool]:
+    _ensure_config()
     try:
         return load_config()
     except ValueError as exc:
         console.print(f"[red]Configuration error:[/red] {exc}")
-        console.print("  Run [bold]zigporter setup[/bold] to create your config file.")
+        console.print("  Run [bold]zigporter setup[/bold] to update your config.")
         raise typer.Exit(code=1) from exc
 
 
@@ -78,7 +89,7 @@ def _get_z2m_config() -> tuple[str, str]:
         return load_z2m_config()
     except ValueError as exc:
         console.print(f"[red]Configuration error:[/red] {exc}")
-        console.print("  Run [bold]zigporter setup[/bold] to create your config file.")
+        console.print("  Run [bold]zigporter setup[/bold] to update your config.")
         raise typer.Exit(code=1) from exc
 
 
@@ -115,6 +126,7 @@ def check() -> None:
     Checks HA connectivity, ZHA status, and Z2M availability.
     Run this before your first migration session.
     """
+    _ensure_config()
     ha_url, token, verify_ssl = _get_config_optional()
     z2m_url, _ = _get_z2m_config_optional()
 
