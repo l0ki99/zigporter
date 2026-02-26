@@ -9,10 +9,11 @@
 
 *Because migrating 30 Zigbee devices in Home Assistant by hand is a special kind of misery.*
 
-![zigporter comic](https://raw.githubusercontent.com/nordstad/zigporter/main/docs/assets/zigporter.png)
 
 CLI tool that automates the ZHA → Zigbee2MQTT migration in Home Assistant — one device at a
 time, with checkpoints so you can stop and pick up where you left off.
+
+![zigporter comic](https://raw.githubusercontent.com/nordstad/zigporter/main/docs/assets/zigporter.png)
 
 > **Early Development Notice** — Only tested with `HA OS 2026.2.3` · `Supervisor 2026.02.2` · `Zigbee2MQTT 2.8.0-1`.
 > Feedback very welcome — please open an [issue](https://github.com/nordstad/zigporter/issues) or submit a
