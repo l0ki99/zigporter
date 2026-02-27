@@ -1,14 +1,14 @@
 # zigporter
 
-<p align="center">
-  [![CI](https://github.com/nordstad/zigporter/actions/workflows/ci.yml/badge.svg)](https://github.com/nordstad/zigporter/actions/workflows/ci.yml)
-  [![codecov](https://codecov.io/gh/nordstad/zigporter/branch/main/graph/badge.svg)](https://codecov.io/gh/nordstad/zigporter)
-  [![Documentation](https://img.shields.io/badge/docs-zensical-blue)](https://nordstad.github.io/zigporter)
-  [![PyPI - Version](https://img.shields.io/pypi/v/zigporter?label=PyPI)](https://pypi.org/project/zigporter/)
-  [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![PyPI Downloads](https://static.pepy.tech/personalized-badge/zigporter?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/zigporter)
-</p>
+
+[![CI](https://github.com/nordstad/zigporter/actions/workflows/ci.yml/badge.svg)](https://github.com/nordstad/zigporter/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/nordstad/zigporter/branch/main/graph/badge.svg)](https://codecov.io/gh/nordstad/zigporter)
+[![Documentation](https://img.shields.io/badge/docs-zensical-blue)](https://nordstad.github.io/zigporter)
+[![PyPI - Version](https://img.shields.io/pypi/v/zigporter?label=PyPI)](https://pypi.org/project/zigporter/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/zigporter?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/zigporter)
+
 
 *Because migrating 30 Zigbee devices in Home Assistant by hand is a special kind of misery.*
 
