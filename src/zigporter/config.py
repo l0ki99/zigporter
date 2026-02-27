@@ -2,17 +2,15 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from platformdirs import user_config_path
 
 
 def config_dir() -> Path:
-    """Return (and create) the platform-appropriate config directory for zigporter.
-
-    - Linux:   ~/.config/zigporter
-    - macOS:   ~/Library/Application Support/zigporter
-    - Windows: C:\\Users\\<user>\\AppData\\Local\\zigporter
-    """
-    return user_config_path("zigporter", ensure_exists=True)
+    """Return (and create) the XDG config directory for zigporter (~/.config/zigporter)."""
+    xdg_config = os.environ.get("XDG_CONFIG_HOME")
+    base = Path(xdg_config) if xdg_config else Path.home() / ".config"
+    p = base / "zigporter"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
 
 
 def default_export_path() -> Path:

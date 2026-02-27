@@ -71,7 +71,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv python install 3.13
+          python-version: "3.13"
       - run: uv sync --dev
       - name: Build and validate package
         run: |
