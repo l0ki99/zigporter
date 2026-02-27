@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [0.1.1] - 2026-02-27
+
+### Fixed
+
+- Potential fix for code scanning alert no. 1: Workflow does not contain permissions (#9)
+- fix: use XDG config dir (~/.config/zigporter) on all platforms (#10)
+
 ## [0.1.0] - 2026-02-26
 
 ### Added
@@ -26,5 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump codecov/codecov-action from 4 to 5 (#3)
 - Bump actions/github-script from 7 to 8 (#2)
 
-[Unreleased]: https://github.com/nordstad/zigporter/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/nordstad/zigporter/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/nordstad/zigporter/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nordstad/zigporter/releases/tag/v0.1.0
