@@ -6,6 +6,11 @@ The wizard migrates one device at a time. Run it with:
 zigporter migrate [ZHA_EXPORT]
 ```
 
+> **Back up first** — The wizard removes devices from ZHA and rewrites entity IDs,
+> automations, and dashboards. These changes are difficult to reverse. Before running,
+> [back up your Home Assistant configuration](https://www.home-assistant.io/common-tasks/os/#backups).
+> This tool is provided **as-is** with no warranty. Use at your own risk.
+
 `ZHA_EXPORT` defaults to `~/.config/zigporter/zha-export.json` (auto-created by `zigporter export`).
 Check progress without entering the wizard:
 
