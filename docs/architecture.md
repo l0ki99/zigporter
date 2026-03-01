@@ -5,7 +5,7 @@
 ```
 CLI Layer       main.py  (Typer, --help / --version)
     ↓
-Command Layer   commands/{export, migrate, list_z2m, check, inspect, setup}.py
+Command Layer   commands/{check, export, inspect, list_z2m, migrate, rename, setup}.py
     ↓
 Client Layer    ha_client.py   (WebSocket + REST)
                 z2m_client.py  (HTTP ingress, three-tier auth)

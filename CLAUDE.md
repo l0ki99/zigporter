@@ -17,6 +17,10 @@ uv run zigporter --help
 uv run zigporter export
 uv run zigporter list-z2m
 uv run zigporter migrate <export-file>
+uv run zigporter check                       # Pre-flight connectivity check
+uv run zigporter inspect <device>            # Inspect a single device's state
+uv run zigporter rename-entity <old> <new>   # Rename a HA entity ID
+uv run zigporter rename-device <id> <name>   # Rename a Z2M device friendly name
 
 # Run all tests
 uv run pytest
@@ -39,7 +43,7 @@ The codebase follows a layered architecture:
 ```
 CLI Layer       main.py (Typer app, registers commands)
     ↓
-Command Layer   commands/{export,migrate,compare,rename}.py
+Command Layer   commands/{check,export,inspect,list_z2m,migrate,rename,setup}.py
     ↓
 Client Layer    ha_client.py (HA WebSocket + REST), z2m_client.py (Z2M HTTP ingress)
     ↓
@@ -60,6 +64,18 @@ Run `zigporter setup` or create `~/.config/zigporter/.env`. CWD `.env` still wor
 a project-level override (useful for `uv run` development).
 
 `config.py` loads these via `python-dotenv` and exposes a `Config` dataclass. SSL context is built from `HA_VERIFY_SSL` and passed through all HTTP/WebSocket calls.
+
+## Environment Variables
+
+Required in `~/.config/zigporter/.env` or `.env` (CWD):
+
+```env
+HA_URL=http://homeassistant.local:8123
+HA_TOKEN=<long-lived access token>
+HA_VERIFY_SSL=true          # Set false for self-signed certs
+Z2M_URL=http://homeassistant.local:8123/api/hassio_ingress/<slug>
+Z2M_MQTT_TOPIC=zigbee2mqtt  # Default; change if customised
+```
 
 ## Key Conventions
 

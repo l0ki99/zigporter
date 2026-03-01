@@ -1,6 +1,6 @@
 [project]
 site_name = "zigporter"
-site_description = "Migrate Zigbee devices from ZHA to Zigbee2MQTT in Home Assistant"
+site_description = "Home Assistant device management — migrate from ZHA to Z2M, rename entities and devices with full cascade"
 site_author = "Even Nordstad"
 site_url = "https://nordstad.github.io/zigporter"
 repo_url = "https://github.com/nordstad/zigporter"
@@ -13,6 +13,7 @@ nav = [
   ] },
   { "Guide" = [
     { "Migration wizard" = "guide/migration-wizard.md" },
+    { "Rename commands" = "guide/rename.md" },
     { "Z2M authentication" = "guide/authentication.md" },
   ] },
   { "Architecture" = "architecture.md" },

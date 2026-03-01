@@ -1,6 +1,5 @@
 # zigporter
 
-
 [![CI](https://github.com/nordstad/zigporter/actions/workflows/ci.yml/badge.svg)](https://github.com/nordstad/zigporter/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/nordstad/zigporter/branch/main/graph/badge.svg)](https://codecov.io/gh/nordstad/zigporter)
 [![Documentation](https://img.shields.io/badge/docs-zensical-blue)](https://nordstad.github.io/zigporter)
@@ -9,24 +8,29 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/zigporter?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/zigporter)
 
+Home Assistant device management from the command line — migrate from ZHA to Zigbee2MQTT,
+rename entities and devices with full cascade across automations, scripts, and dashboards.
 
-*Because migrating 30 Zigbee devices in Home Assistant by hand is a special kind of misery.*
+> **Early Development** — Tested with HA OS 2026.2.3 · Supervisor 2026.02.2 · Z2M 2.8.0-1.
+> Open an [issue](https://github.com/nordstad/zigporter/issues) if you run a different configuration.
 
+## Features
 
-CLI tool that automates the ZHA → Zigbee2MQTT migration in Home Assistant — one device at a
-time, with checkpoints so you can stop and pick up where you left off.
-
-![zigporter comic](https://raw.githubusercontent.com/nordstad/zigporter/main/docs/assets/zigporter.png)
-
-> **Early Development Notice** — Only tested with `HA OS 2026.2.3` · `Supervisor 2026.02.2` · `Zigbee2MQTT 2.8.0-1`.
-> Feedback very welcome — please open an [issue](https://github.com/nordstad/zigporter/issues) or submit a
-> [PR](https://github.com/nordstad/zigporter/pulls) if you test with a different configuration.
+| Command | Description |
+|---|---|
+| `migrate` | Interactive wizard: remove from ZHA → factory reset → pair with Z2M → restore names, areas, and entity IDs |
+| `rename-entity` | Rename a HA entity ID and cascade the change across automations, scripts, scenes, and all Lovelace dashboards |
+| `rename-device` | Rename any HA device by name and cascade the change to all its entities and references |
+| `check` | Verify HA and Z2M connectivity before making changes |
+| `inspect` | Show a device's current state across ZHA, Z2M, and the HA registry |
+| `export` | Snapshot your ZHA device inventory to JSON |
+| `list-z2m` | List all devices currently paired with Zigbee2MQTT |
 
 ## Requirements
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/)
-- Home Assistant with ZHA and Zigbee2MQTT add-on
+- Home Assistant with the Zigbee2MQTT add-on
 
 ## Installation
 
@@ -34,86 +38,90 @@ time, with checkpoints so you can stop and pick up where you left off.
 uv tool install zigporter
 ```
 
+Or with pip:
+
+```bash
+pip install zigporter
+```
+
 ## Configuration
 
-### Option 1 — Setup wizard (recommended)
+Run the setup wizard to get started:
 
 ```bash
 zigporter setup
 ```
 
-Prompts for all values and saves to `~/.config/zigporter/.env`.
+This prompts for all required values and saves them to `~/.config/zigporter/.env`.
 
-### Option 2 — Manual config file
-
-Create `~/.config/zigporter/.env` (see `.env.example` for the template):
-
-```bash
-mkdir -p ~/.config/zigporter
-cp .env.example ~/.config/zigporter/.env
-# edit the file with your values
-```
-
-### Option 3 — Environment variables
-
-Export directly in your shell or add to `~/.zshenv` / `~/.bashrc`:
-
-```bash
-export HA_URL=https://your-ha-instance.local
-export HA_TOKEN=your_token
-export Z2M_URL=https://your-ha-instance.local/abc123_zigbee2mqtt
-```
+You can also set environment variables directly or create the file manually:
 
 | Variable | Required | Description |
-| --- | --- | --- |
-| `HA_URL` | Yes | Home Assistant URL |
+|---|---|---|
+| `HA_URL` | Yes | Home Assistant base URL |
 | `HA_TOKEN` | Yes | [Long-Lived Access Token](https://www.home-assistant.io/docs/authentication/#your-account-profile) |
-| `HA_VERIFY_SSL` | No | `true` / `false` (default: `true`; use `false` for self-signed certs) |
+| `HA_VERIFY_SSL` | No | `true` (default) or `false` for self-signed certificates |
 | `Z2M_URL` | Yes | Zigbee2MQTT ingress URL |
-| `Z2M_MQTT_TOPIC` | No | Z2M base topic (default: `zigbee2mqtt`) |
+| `Z2M_MQTT_TOPIC` | No | Z2M base MQTT topic (default: `zigbee2mqtt`) |
 
-## Usage
+See [Configuration](https://nordstad.github.io/zigporter/getting-started/configuration/) for full details.
+
+## Migrate ZHA → Zigbee2MQTT
 
 ```bash
-# Verify your setup before migrating (recommended first step)
+# Verify connectivity first
 zigporter check
 
-# Run the migration wizard (runs checks automatically on first run)
+# Run the migration wizard
 zigporter migrate
-
-# Check migration progress without entering the wizard
-zigporter migrate --status
-
-# (Optional) manually export your ZHA device inventory
-zigporter export
-
-# (Optional) inspect what's already in Z2M
-zigporter list-z2m
 ```
 
-`zigporter migrate` handles everything automatically on first run:
+The wizard guides you through each device one at a time:
 
-1. Runs pre-flight checks (HA reachable, ZHA active, Z2M running)
-2. Prompts you to back up Home Assistant and your ZHA network
-3. Fetches a ZHA export if one is not found, or offers to refresh an existing one
-4. Opens the interactive migration wizard
+1. Remove from ZHA — polls the HA registry until the device is gone
+2. Factory reset — prompts to clear the old pairing on the physical device
+3. Pair with Z2M — opens a 300 s permit-join window and polls by IEEE address
+4. Rename — restores the original ZHA name and area in Z2M and HA
+5. Restore entity IDs — renames IEEE-hex entity IDs back to friendly names
+6. Review — shows all Lovelace cards referencing the device
+7. Validate — polls HA entity states until all entities come online
 
-All files are stored in `~/.config/zigporter/` so the tool works from any directory.
-Use `--skip-checks` on subsequent runs to skip the pre-flight checks.
+Progress is saved after every step. Press `Ctrl-C` to pause; rerun to resume.
 
-## How it works
+```bash
+# Check progress without entering the wizard
+zigporter migrate --status
+```
 
-The wizard migrates one device at a time through five steps:
+## Rename an Entity
 
-1. **Remove from ZHA** — confirms deletion in the HA registry
-2. **Reset device** — prompts you to factory-reset the physical device
-3. **Pair with Z2M** — opens a 120 s permit-join window and polls by IEEE address
-4. **Rename** — applies the original ZHA name and area in Z2M and HA
-5. **Validate** — polls HA entity states until all are online
+Rename a Home Assistant entity ID and automatically update every reference — automations,
+scripts, scenes, and Lovelace dashboards:
 
-State is written to `zha-migration-state.json` after every step. `Ctrl-C` marks the device `FAILED` — rerun to retry.
+```bash
+# Preview changes (dry run)
+zigporter rename-entity light.living_room_1 light.living_room_ceiling
 
-See the [wiki](https://github.com/nordstad/zigporter/wiki) for detailed diagrams and architecture docs.
+# Apply the rename
+zigporter rename-entity light.living_room_1 light.living_room_ceiling --apply
+```
+
+Without `--apply` the command shows a full diff and prompts for confirmation before writing.
+
+> **Note:** Jinja2 template expressions (`{{ states('old.id') }}`) are not patched automatically — review them after renaming.
+
+## Rename a Device
+
+Rename any Home Assistant device by name and cascade the change to all its entities and
+references in HA. Supports partial name matching:
+
+```bash
+# Preview changes (dry run)
+zigporter rename-device "Living Room 1" "Living Room Ceiling"
+
+# Apply the rename
+zigporter rename-device "Living Room 1" "Living Room Ceiling" --apply
+```
 
 ## Development
 
@@ -123,6 +131,8 @@ uv run pytest
 uv run ruff check .
 uv run ruff format .
 ```
+
+See [Development](https://nordstad.github.io/zigporter/development/) for architecture details and contribution guidelines.
 
 ## License
 
