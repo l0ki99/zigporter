@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [0.2.1] - 2026-03-01
+
+### Fixed
+
+- fix: reload Z2M integration after rename-device to restore MQTT subscriptions (#24)
+
 ## [0.2.1] - 2026-03-01
 
 ### Fixed
@@ -109,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump actions/github-script from 7 to 8 (#2)
 
 [Unreleased]: https://github.com/nordstad/zigporter/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/nordstad/zigporter/compare/v0.2.1...v0.2.1
 [0.2.1]: https://github.com/nordstad/zigporter/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/nordstad/zigporter/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/nordstad/zigporter/compare/v0.1.5...v0.1.5
