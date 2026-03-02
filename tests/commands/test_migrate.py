@@ -8,8 +8,12 @@ from zigporter.commands.migrate import (
     step_reconcile_entity_ids,
     step_remove_from_zha,
     step_rename,
-    step_show_test_checklist,
     step_validate,
+)
+from zigporter.commands.migrate_reporting import (
+    show_device_dependencies,
+    step_show_inspect_summary,
+    step_show_test_checklist,
 )
 from zigporter.migration_state import load_state, mark_migrated
 from zigporter.models import AutomationRef, ZHADevice, ZHAEntity
@@ -350,7 +354,7 @@ async def test_step_show_test_checklist_prints_all_types(sample_device, mock_ha_
     )
 
     # Should not raise; output is printed to console
-    await step_show_test_checklist(sample_device, mock_ha_client)
+    await step_show_test_checklist(sample_device, mock_ha_client, MagicMock())
     mock_ha_client.get_scripts.assert_called_once()
     mock_ha_client.get_scenes.assert_called_once()
 
@@ -379,7 +383,99 @@ async def test_step_show_test_checklist_silent_when_nothing_matches(sample_devic
     )
 
     # Should return without printing checklist
-    await step_show_test_checklist(sample_device, mock_ha_client)
+    await step_show_test_checklist(sample_device, mock_ha_client, MagicMock())
+
+
+async def test_step_show_test_checklist_ha_unreachable(sample_device, mock_ha_client):
+    """When HA is unreachable the checklist step returns silently without raising."""
+    sample_device.automations = []
+    mock_ha_client.get_scripts = AsyncMock(side_effect=OSError("connection refused"))
+    mock_ha_client.get_scenes = AsyncMock(return_value=[])
+
+    await step_show_test_checklist(sample_device, mock_ha_client, MagicMock())
+
+
+# ---------------------------------------------------------------------------
+# show_device_dependencies
+# ---------------------------------------------------------------------------
+
+
+async def test_show_device_dependencies_renders_all_types(sample_device, mock_ha_client):
+    """Automations, scripts, and scenes referencing the device are all printed."""
+    sample_device.entities = [
+        ZHAEntity(
+            entity_id="switch.kitchen_plug",
+            name="Kitchen Plug",
+            platform="zha",
+            state="on",
+            attributes={},
+        )
+    ]
+    sample_device.automations = [
+        AutomationRef(
+            automation_id="automation.morning",
+            alias="Morning routine",
+            entity_references=["switch.kitchen_plug"],
+        )
+    ]
+    mock_ha_client.get_scripts = AsyncMock(
+        return_value=[
+            {
+                "id": "turn_on_kitchen",
+                "alias": "Turn on kitchen",
+                "sequence": [{"service": "switch.turn_on", "entity_id": "switch.kitchen_plug"}],
+            }
+        ]
+    )
+    mock_ha_client.get_scenes = AsyncMock(
+        return_value=[
+            {
+                "id": "kitchen_evening",
+                "name": "Kitchen evening",
+                "entities": {"switch.kitchen_plug": {"state": "on"}},
+            }
+        ]
+    )
+    mock_console = MagicMock()
+
+    await show_device_dependencies(sample_device, mock_ha_client, mock_console)
+
+    mock_ha_client.get_scripts.assert_called_once()
+    mock_ha_client.get_scenes.assert_called_once()
+    mock_console.rule.assert_called()
+
+
+async def test_show_device_dependencies_silent_when_nothing_matches(sample_device, mock_ha_client):
+    """No output when no automations/scripts/scenes reference the device entities."""
+    sample_device.entities = [
+        ZHAEntity(
+            entity_id="switch.kitchen_plug",
+            name="Kitchen Plug",
+            platform="zha",
+            state="on",
+            attributes={},
+        )
+    ]
+    sample_device.automations = []
+    mock_ha_client.get_scripts = AsyncMock(return_value=[])
+    mock_ha_client.get_scenes = AsyncMock(return_value=[])
+    mock_console = MagicMock()
+
+    await show_device_dependencies(sample_device, mock_ha_client, mock_console)
+
+    mock_console.rule.assert_not_called()
+
+
+async def test_show_device_dependencies_ha_unreachable(sample_device, mock_ha_client):
+    """HA being unreachable is silently swallowed — dependency preview is optional."""
+    sample_device.automations = []
+    mock_ha_client.get_scripts = AsyncMock(side_effect=OSError("connection refused"))
+    mock_ha_client.get_scenes = AsyncMock(return_value=[])
+    mock_console = MagicMock()
+
+    await show_device_dependencies(sample_device, mock_ha_client, mock_console)
+
+    mock_console.rule.assert_not_called()
 
 
 def test_show_status_renders(tmp_path):
@@ -706,30 +802,24 @@ async def test_step_reconcile_suffix_conflict_skips_on_cancel(mock_ha_client):
 
 async def test_step_show_inspect_summary_skips_when_no_z2m_device(sample_device, mock_ha_client):
     """When Z2M device is not found in HA, entity registry is never queried."""
-    from zigporter.commands.migrate import step_show_inspect_summary  # noqa: PLC0415
-
     mock_ha_client.get_z2m_device_id = AsyncMock(return_value=None)
 
-    await step_show_inspect_summary(sample_device, mock_ha_client)
+    await step_show_inspect_summary(sample_device, mock_ha_client, MagicMock())
 
     mock_ha_client.get_entity_registry.assert_not_called()
 
 
 async def test_step_show_inspect_summary_skips_when_no_entities(sample_device, mock_ha_client):
     """When Z2M device has no enabled entities, dashboard fetch is skipped."""
-    from zigporter.commands.migrate import step_show_inspect_summary  # noqa: PLC0415
-
     mock_ha_client.get_entity_registry = AsyncMock(return_value=[])
 
-    await step_show_inspect_summary(sample_device, mock_ha_client)
+    await step_show_inspect_summary(sample_device, mock_ha_client, MagicMock())
 
     mock_ha_client.get_panels.assert_not_called()
 
 
 async def test_step_show_inspect_summary_normal(sample_device, mock_ha_client):
     """Normal path: fetches entity registry and dashboard data then shows the summary."""
-    from zigporter.commands.migrate import step_show_inspect_summary  # noqa: PLC0415
-
     mock_ha_client.get_lovelace_config = AsyncMock(
         return_value={
             "views": [
@@ -741,7 +831,7 @@ async def test_step_show_inspect_summary_normal(sample_device, mock_ha_client):
         }
     )
 
-    await step_show_inspect_summary(sample_device, mock_ha_client)
+    await step_show_inspect_summary(sample_device, mock_ha_client, MagicMock())
 
     mock_ha_client.get_z2m_device_id.assert_called_once_with(sample_device.ieee)
     mock_ha_client.get_entity_registry.assert_called()
@@ -750,12 +840,10 @@ async def test_step_show_inspect_summary_normal(sample_device, mock_ha_client):
 
 async def test_step_show_inspect_summary_swallows_exceptions(sample_device, mock_ha_client):
     """Exceptions during summary fetching do not propagate — the wizard must not be interrupted."""
-    from zigporter.commands.migrate import step_show_inspect_summary  # noqa: PLC0415
-
     mock_ha_client.get_z2m_device_id = AsyncMock(side_effect=RuntimeError("network error"))
 
     # Must not raise
-    await step_show_inspect_summary(sample_device, mock_ha_client)
+    await step_show_inspect_summary(sample_device, mock_ha_client, MagicMock())
 
 
 # ---------------------------------------------------------------------------
