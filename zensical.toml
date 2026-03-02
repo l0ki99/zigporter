@@ -55,6 +55,10 @@ accent = "cyan"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
+[project.extra.analytics]
+provider = "google"
+property = "G-S1F1E1MYLJ"
+
 [[project.plugins]]
 search = {}
 
