@@ -14,6 +14,10 @@ rename entities and devices with full cascade across automations, scripts, and d
 > **Early Development** — Tested with HA OS 2026.2.3 · Supervisor 2026.02.2 · Z2M 2.8.0-1.
 > Open an [issue](https://github.com/nordstad/zigporter/issues) if you run a different configuration.
 
+## Try it
+
+**[Interactive Demo →](https://nordstad.github.io/zigporter/interactive-demo/)** — see every command in action before installing.
+
 ## Features
 
 <table>
