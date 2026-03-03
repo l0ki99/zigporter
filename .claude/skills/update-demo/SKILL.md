@@ -32,6 +32,9 @@ git log <demo-sha>..HEAD --oneline -- src/zigporter/main.py src/zigporter/comman
      - Adjust table columns/widths to reflect new Rich output
      - Update command-line invocations if flag names changed
      - Keep timing values consistent with existing entries (~300–900 ms per line)
+   - **Mobile width constraint:** the mobile breakpoint uses `font-size: 8px` which fits ~78 chars
+     on a 390px viewport. Keep table widths ≤ 78 chars; the widest table (`list-z2m`) is already
+     at that limit. Wider content will overflow on mobile.
 
 4. **For new commands — add a demo entry**
    - Write a new `DEMO_<NAME>` constant following the existing format:
@@ -48,9 +51,14 @@ git log <demo-sha>..HEAD --oneline -- src/zigporter/main.py src/zigporter/comman
    - Delete the `DEMO_<NAME>` constant
    - Remove the matching entry from the `DEMOS` array
 
-6. **Verify the HTML is self-consistent**
-   - Open `site/demo/index.html` in a browser and click through every demo card
-   - Confirm no JS console errors and all cards play to completion without stalling
+6. **Verify the HTML is self-consistent using Playwright MCP**
+   - Start a local server: `python3 -m http.server 8765 --directory site/demo`
+   - Resize to mobile (390×844) and desktop (1440×900) and navigate to `http://localhost:8765/index.html`
+   - Click through each demo card and take screenshots to confirm:
+     - All cards play to completion without stalling
+     - Tables render fully without clipping on mobile
+     - No JS console errors
+   - Kill the server when done
 
 7. **Show a summary diff** of what changed in `site/demo/index.html` and confirm with the user
    before finishing.
