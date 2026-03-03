@@ -7,11 +7,17 @@ description: >
 
 ## Steps
 
+**Important:** `site/` is the MkDocs build output directory and is listed in `.gitignore`.
+`site/demo/index.html` is therefore **not tracked by git** — git commands referencing it will
+return empty results. The source file lives at `site/demo/index.html` on disk and is edited
+directly; there is no separate source location to sync from.
+
 1. **Find what changed in the CLI since the last demo update**
 
 ```bash
-git log --oneline -- site/demo/index.html | head -1   # last demo commit SHA
-git log <demo-sha>..HEAD --oneline -- src/zigporter/main.py src/zigporter/commands/
+# site/demo/index.html is NOT in git (site/ is gitignored as MkDocs output).
+# Instead, check CLI source commits since the last known demo-sync date:
+git log --oneline --since="<last-sync-date>" -- src/zigporter/main.py src/zigporter/commands/
 ```
 
 2. **Audit commands vs demo scenarios**
