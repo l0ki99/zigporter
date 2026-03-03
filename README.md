@@ -32,12 +32,6 @@
   </tbody>
 </table>
 
-## Requirements
-
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/)
-- Home Assistant with the Zigbee2MQTT add-on
-
 ## Installation
 
 ```bash
@@ -58,7 +52,7 @@ Run the setup wizard to get started:
 zigporter setup
 ```
 
-This prompts for all required values and saves them to `~/.config/zigporter/.env`.
+This prompts for HA credentials (required) and Zigbee2MQTT settings (optional — only needed for `migrate` and `list-z2m`).
 
 You can also set environment variables directly or create the file manually:
 
@@ -67,8 +61,8 @@ You can also set environment variables directly or create the file manually:
 | `HA_URL` | Yes | Home Assistant base URL |
 | `HA_TOKEN` | Yes | [Long-Lived Access Token](https://www.home-assistant.io/docs/authentication/#your-account-profile) |
 | `HA_VERIFY_SSL` | No | `true` (default) or `false` for self-signed certificates |
-| `Z2M_URL` | For `migrate` / `list-z2m` / `rename-device` | Zigbee2MQTT ingress URL |
-| `Z2M_MQTT_TOPIC` | No | Z2M base MQTT topic (default: `zigbee2mqtt`) |
+| `Z2M_URL` | Only for `migrate` and `list-z2m` | Zigbee2MQTT ingress URL |
+| `Z2M_MQTT_TOPIC` | Only for `migrate` and `list-z2m` | Z2M base MQTT topic (default: `zigbee2mqtt`) |
 
 See [Configuration](https://nordstad.github.io/zigporter/getting-started/configuration/) for full details.
 
