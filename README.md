@@ -199,6 +199,8 @@ Running a different version? Open an [issue](https://github.com/nordstad/zigport
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, code style, and how to submit a pull request.
+
 ```bash
 uv sync --dev
 uv run pytest
