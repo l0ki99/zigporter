@@ -1,26 +1,25 @@
 ---
 name: update-demo
 description: >
-  Audit and update the interactive demo at site/demo/index.html to match the current CLI.
+  Audit and update the interactive demo at docs/demo/index.html to match the current CLI.
   Run this after adding, changing, or removing a CLI command to keep the demo in sync.
 ---
 
 ## Steps
 
-**Note:** `site/` is the MkDocs build output directory and is listed in `.gitignore`, but
-`site/demo/index.html` is explicitly un-ignored via negation rules and **is tracked by git**.
-It is edited directly in place; there is no separate source location.
+**Note:** The demo source is `docs/demo/index.html` — tracked by git as part of the MkDocs
+source tree. It is edited directly in place. `site/` is the build output and is gitignored.
 
 1. **Find what changed in the CLI since the last demo update**
 
 ```bash
-git log --oneline -- site/demo/index.html | head -1   # last demo commit SHA
+git log --oneline -- docs/demo/index.html | head -1   # last demo commit SHA
 git log <demo-sha>..HEAD --oneline -- src/zigporter/main.py src/zigporter/commands/
 ```
 
 2. **Audit commands vs demo scenarios**
    - Read `src/zigporter/main.py` — collect every registered Typer command name
-   - Read `site/demo/index.html` — extract the `DEMOS` array (keys: `check`, `list-z2m`, `migrate`,
+   - Read `docs/demo/index.html` — extract the `DEMOS` array (keys: `check`, `list-z2m`, `migrate`,
      `rename`, `fix`, `inspect`, plus any others)
    - Identify **gaps**: CLI commands that exist but have no demo entry (and would benefit from one)
    - Identify **stale entries**: demo scenarios referencing commands that have been removed
@@ -52,7 +51,7 @@ git log <demo-sha>..HEAD --oneline -- src/zigporter/main.py src/zigporter/comman
    - Remove the matching entry from the `DEMOS` array
 
 6. **Verify the HTML is self-consistent using Playwright MCP**
-   - Start a local server: `python3 -m http.server 8765 --directory site/demo`
+   - Start a local server: `python3 -m http.server 8765 --directory docs/demo`
    - Resize to mobile (390×844) and desktop (1440×900) and navigate to `http://localhost:8765/index.html`
    - Click through each demo card and take screenshots to confirm:
      - All cards play to completion without stalling
@@ -60,5 +59,5 @@ git log <demo-sha>..HEAD --oneline -- src/zigporter/main.py src/zigporter/comman
      - No JS console errors
    - Kill the server when done
 
-7. **Show a summary diff** of what changed in `site/demo/index.html` and confirm with the user
+7. **Show a summary diff** of what changed in `docs/demo/index.html` and confirm with the user
    before finishing.

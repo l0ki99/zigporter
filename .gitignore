@@ -20,8 +20,6 @@ junit.xml
 
 # Docs build output
 site/
-!site/demo/
-!site/demo/index.html
 
 # Local data files
 zha-export-*.json

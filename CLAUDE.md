@@ -124,10 +124,10 @@ Use the `/bump-version` skill to automate step 1 (analyses unreleased commits, m
 
 ## Demo
 
-`site/demo/index.html` is a self-contained browser terminal emulator with hardcoded playback scripts.
+`docs/demo/index.html` is a self-contained browser terminal emulator with hardcoded playback scripts.
 
 **Keep it in sync:** after adding or significantly changing a CLI command, run `/update-demo` to audit
-and update the demo scenarios. Specifically:
+and update the demo scenarios at `docs/demo/index.html`. Specifically:
 
 - New command added → add a `DEMO_<NAME>` script and `DEMOS` registry entry
 - Command output or steps changed → update the matching `DEMO_*` constant
