@@ -15,6 +15,7 @@ nav = [
     { "Migration wizard" = "guide/migration-wizard.md" },
     { "Rename commands" = "guide/rename.md" },
     { "Z2M authentication" = "guide/authentication.md" },
+    { "Offline devices" = "guide/stale.md" },
   ] },
   { "API Reference" = [
     { "Overview" = "api/index.md" },
