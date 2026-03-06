@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-03-06
+
+### Added
+
+- `network-map`: content-aware ring radii scale automatically to fit all devices
+  without label overlap; each hop ring uses a distinct colour (#45)
+- `migrate` wizard: interactive area picker in step 4 — choose from existing HA
+  areas instead of typing a name (#43)
+
+### Fixed
+
+- `migrate`: detect Z2M interview completion via MQTT bridge events instead of
+  polling `get_devices()`, which never returned `interview_completed` in Z2M 2.x (#44)
+- `network-map`: increase `MIN_RING_GAP`, `COLLISION_GAP`, and `COLLISION_ITERS`
+  to eliminate label overlap in dense networks
 
 ## [0.8.0] - 2026-03-06
 
@@ -264,7 +279,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump codecov/codecov-action from 4 to 5 (#3)
 - Bump actions/github-script from 7 to 8 (#2)
 
-[Unreleased]: https://github.com/nordstad/zigporter/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/nordstad/zigporter/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/nordstad/zigporter/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/nordstad/zigporter/compare/v0.8.0...v0.8.0
 [0.8.0]: https://github.com/nordstad/zigporter/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/nordstad/zigporter/compare/v0.7.0...v0.7.0
