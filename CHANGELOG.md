@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-03-06
+
+### Added
+
+- `network-map` command: renders Zigbee mesh topology as a Rich tree or table
+  with LQI colour-coding (WEAK/CRITICAL annotations); `--output` flag exports a
+  polished radial SVG diagram with glow filters, in-circle path-min LQI badges,
+  and pill label backgrounds (#42)
+- Z2M MQTT fallback for `network-map`: when Z2M 2.x returns 404 on the REST
+  endpoint, the client subscribes to the MQTT response topic and publishes the
+  request via HA WebSocket `call_service` (#42)
+- Docs: guide pages for `fix-device` and utility commands; all commands now
+  linked from the docs index
 
 ## [0.7.0] - 2026-03-05
 
@@ -244,7 +257,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump codecov/codecov-action from 4 to 5 (#3)
 - Bump actions/github-script from 7 to 8 (#2)
 
-[Unreleased]: https://github.com/nordstad/zigporter/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/nordstad/zigporter/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/nordstad/zigporter/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/nordstad/zigporter/compare/v0.7.0...v0.7.0
 [0.7.0]: https://github.com/nordstad/zigporter/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/nordstad/zigporter/compare/v0.6.0...v0.6.1
