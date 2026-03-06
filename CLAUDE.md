@@ -179,3 +179,9 @@ and update the demo scenarios at `docs/demo/index.html`. Specifically:
 - New command added → add a `DEMO_<NAME>` script and `DEMOS` registry entry
 - Command output or steps changed → update the matching `DEMO_*` constant
 - Command removed → remove its `DEMO_*` constant and `DEMOS` entry
+
+## GitHub repository
+
+- Repo slug: `nordstad/zigporter`
+- Update the GitHub "About" description: `gh repo edit nordstad/zigporter --description "..."`
+- Before investigating a failing CI run URL, run `gh run list --limit 5` to confirm it corresponds to the current HEAD — it may be a stale run from a previous commit.
