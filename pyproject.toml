@@ -1,7 +1,7 @@
 [project]
 name = "zigporter"
 version = "0.8.0"
-description = "CLI toolkit for Zigbee device management in Home Assistant: migrate from ZHA to Zigbee2MQTT, rename entities, and fix stale registry entries"
+description = "CLI toolkit for Home Assistant Zigbee — migrate ZHA → Z2M, cascade-rename entities and devices, and map your mesh."
 readme = "README.md"
 authors = [
     { name = "Even Nordstad", email = "even.nordstad@gmail.com" }
