@@ -215,11 +215,21 @@ Open the `.svg` in any browser — hover over truncated device names to see the 
 
 ## Confirmed Working
 
-| Software | Version |
+**Platform**
+
+| | |
+|---|---|
+| OS | Linux, macOS, Windows 11 |
+
+**Software**
+
+| | Version |
 |---|---|
 | Home Assistant OS | 2026.2.3 |
 | HA Supervisor | 2026.02.2 |
+| HA install type | HA OS |
 | Zigbee2MQTT | 2.8.0-1 |
+| Python | 3.12, 3.13 |
 
 Running a different version? Open an [issue](https://github.com/nordstad/zigporter/issues) to let us know.
 
