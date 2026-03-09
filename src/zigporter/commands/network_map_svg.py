@@ -130,16 +130,22 @@ def _subtree_weights(ieee: str, children: dict[str, list[str]]) -> dict[str, int
     (same as a leaf) even though its nodes span 3 rings.
     """
     weights: dict[str, int] = {}
+    _IN_PROGRESS = (-1, -1)  # sentinel for cycle detection
 
     def _calc(n: str) -> tuple[int, int]:  # (leaf_count, depth)
+        if n in weights:
+            v = weights[n]
+            return (1, 1) if v == _IN_PROGRESS else v  # cycle node → treat as leaf
         kids = children.get(n, [])
         if not kids:
             weights[n] = 1
             return 1, 1
+        weights[n] = _IN_PROGRESS  # mark in-progress
         results = [_calc(k) for k in kids]
         leaves = sum(lc for lc, _ in results)
         depth = max(d for _, d in results) + 1
-        weights[n] = max(leaves, depth)
+        result = max(leaves, depth)
+        weights[n] = result
         return leaves, depth
 
     _calc(ieee)

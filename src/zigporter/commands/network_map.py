@@ -299,6 +299,23 @@ def _build_routing_tree(
                     best_score = score
                     best_parent = tgt
             if best_parent is not None and best_score > best_score_map.get(ieee, (-1, -1)):
+                # Guard against re-placement creating a cycle: walk the candidate
+                # parent's ancestry to confirm ieee is not already an ancestor of
+                # best_parent.  This prevents A→B→A loops when two strongly-linked
+                # routers each prefer the other as their best parent.
+                ancestor: str | None = best_parent
+                cycle = False
+                seen: set[str] = set()
+                while ancestor is not None:
+                    if ancestor == ieee:
+                        cycle = True
+                        break
+                    if ancestor in seen:
+                        break
+                    seen.add(ancestor)
+                    ancestor = parent_map.get(ancestor)
+                if cycle:
+                    continue
                 best_score_map[ieee] = best_score
                 parent_map[ieee] = best_parent
                 lqi_map[ieee] = best_score[1]
@@ -612,6 +629,23 @@ async def run_network_map(
     for ieee, parent in parent_map.items():
         if parent is not None:
             children.setdefault(parent, []).append(ieee)
+
+    # Safety net: any node not reachable from the coordinator via the children
+    # tree (e.g. due to a cycle that the BFS didn't catch) is attached directly
+    # to the coordinator so it still appears in the rendered output.
+    if coordinator_ieee:
+        reachable: set[str] = set()
+        stack = [coordinator_ieee]
+        while stack:
+            node = stack.pop()
+            if node in reachable:
+                continue
+            reachable.add(node)
+            stack.extend(children.get(node, []))
+        for ieee in nodes:
+            if ieee not in reachable:
+                children[coordinator_ieee].append(ieee)
+                depth_map[ieee] = 1
 
     non_coord = [n for n in nodes.values() if n.get("type") != "Coordinator"]
     router_count = sum(1 for n in non_coord if n.get("type") == "Router")
