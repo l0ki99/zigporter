@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.0.1] - 2026-03-08
+
+### Fixed
+
+- fix(ha-client): don't pass ssl context for ws:// WebSocket connections — fixes `network-map` and all WebSocket commands on HTTP HA instances with `HA_VERIFY_SSL=false` (#48)
+
 ## [1.0.0] - 2026-03-08
 
 ### Added
