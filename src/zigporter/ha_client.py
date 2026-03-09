@@ -81,7 +81,7 @@ class HAClient:
 
         Yields the WebSocket connection after completing the HA auth handshake.
         """
-        ssl_ctx = self._ssl_context()
+        ssl_ctx = self._ssl_context() if self._ws_url.startswith("wss://") else None
         async with websockets.connect(self._ws_url, ssl=ssl_ctx, max_size=16 * 1024 * 1024) as ws:
             msg = json.loads(await ws.recv())
             if msg.get("type") != "auth_required":
