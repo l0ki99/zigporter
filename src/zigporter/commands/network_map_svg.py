@@ -153,16 +153,20 @@ def _compute_path_min_lqi(
     """Min LQI along the full chain from coordinator to each device."""
     cache: dict[str, int] = {}
 
+    _SENTINEL = -1  # marks nodes currently being resolved (cycle detection)
+
     def _min(ieee: str) -> int:
         if ieee in cache:
-            return cache[ieee]
+            return 0 if cache[ieee] == _SENTINEL else cache[ieee]  # cycle → treat as worst quality
         parent = parent_map.get(ieee)
         if parent is None:  # coordinator
             cache[ieee] = 255
             return 255
+        cache[ieee] = _SENTINEL  # mark in-progress before recursing
         link = lqi_map.get(ieee, 0)
-        cache[ieee] = min(link, _min(parent))
-        return cache[ieee]
+        result = min(link, _min(parent))
+        cache[ieee] = result
+        return result
 
     for ieee in parent_map:
         _min(ieee)
@@ -252,13 +256,13 @@ def _resolve_collisions(
     """
     by_depth: dict[int, list[str]] = {}
     for ieee, depth in depth_map.items():
-        if depth > 0:
+        if depth > 0 and ieee in positions:
             by_depth.setdefault(depth, []).append(ieee)
 
     ring_r: dict[str, float] = {
         ieee: (ring_radii.get(depth - 1, 0.0) + ring_radii.get(depth, depth * MIN_RING_GAP)) / 2
         for ieee, depth in depth_map.items()
-        if depth > 0
+        if depth > 0 and ieee in positions
     }
 
     for _ in range(COLLISION_ITERS):
@@ -582,6 +586,8 @@ def render_svg(
     lqi_label_group = dwg.g(id="lqi-labels")
     for ieee, parent_ieee in parent_map.items():
         if parent_ieee is None:
+            continue
+        if ieee not in positions or parent_ieee not in positions:
             continue
         x1, y1 = positions[ieee]
         x2, y2 = positions[parent_ieee]

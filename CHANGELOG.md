@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.0.2] - 2026-03-08
+
+### Fixed
+
+- fix(network-map): handle routing cycles in `parent_map` — recursive `_min` no longer hits `RecursionError` when Z2M reports a cycle in the device tree
+- fix(network-map): skip orphaned nodes (present in `parent_map`/`depth_map` but unreachable in the spanning tree) to prevent `KeyError` crashes in `_resolve_collisions` and the edge-drawing loop
+
 ## [1.0.1] - 2026-03-08
 
 ### Fixed
@@ -323,7 +330,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump codecov/codecov-action from 4 to 5 (#3)
 - Bump actions/github-script from 7 to 8 (#2)
 
-[Unreleased]: https://github.com/nordstad/zigporter/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nordstad/zigporter/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/nordstad/zigporter/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/nordstad/zigporter/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/nordstad/zigporter/compare/v1.0.0...v1.0.0
 [1.0.0]: https://github.com/nordstad/zigporter/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/nordstad/zigporter/compare/v0.9.0...v0.9.0
